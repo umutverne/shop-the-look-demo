@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop the Look — Demo</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #1a1a1a;
+    --line: #e6e2dc;
+    --dot: #1a1a1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Inter, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar h1 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .topbar .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: #eeece8;
+    padding: 3px;
+    border-radius: 9px;
+  }
+  .tab {
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    user-select: none;
+    transition: all .15s ease;
+  }
+  .tab.active {
+    background: white;
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ===== ADMIN VIEW ===== */
+  .admin-wrap {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0;
+    min-height: calc(100vh - 57px);
+  }
+  .admin-canvas {
+    padding: 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .canvas-frame {
+    position: relative;
+    max-width: 640px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    cursor: crosshair;
+    background: #ddd;
+  }
+  .canvas-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .canvas-hint {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.72);
+    color: white;
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .admin-side {
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .admin-side h2 {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .admin-side .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+  .spot-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+    background: #fcfcfb;
+  }
+  .spot-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .spot-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .spot-remove {
+    font-size: 11px;
+    color: #b3403c;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 6px;
+  }
+  .spot-card input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 7px 9px;
+    font-size: 12.5px;
+    margin-bottom: 6px;
+    font-family: inherit;
+  }
+  .spot-card input:last-child { margin-bottom: 0; }
+  .empty-state {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+    padding: 30px 10px;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+  .btn-publish {
+    width: 100%;
+    margin-top: 16px;
+    padding: 11px;
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-publish:hover { opacity: .88; }
+
+  /* ===== STOREFRONT VIEW ===== */
+  .store-section {
+    padding: 64px 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .look {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  @media (max-width: 860px) {
+    .look { grid-template-columns: 1fr; gap: 28px; }
+    .admin-wrap { grid-template-columns: 1fr; }
+    .admin-side { border-left: none; border-top: 1px solid var(--line); }
+  }
+  .look-media {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .look-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .look-dot {
+    position: absolute;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.95);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 10px rgba(0,0,0,.25);
+    transition: transform .2s ease;
+  }
+  .look-dot::before {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--dot);
+  }
+  .look-dot::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.6);
+    animation: pulse 2.2s ease-out infinite;
+  }
+  .look-dot:hover { transform: translate(-50%, -50%) scale(1.12); }
+  .look-dot.active {
+    background: var(--ink);
+  }
+  .look-dot.active::before { background: white; }
+  .look-dot.active::after { display: none; }
+  @keyframes pulse {
+    0% { transform: scale(.85); opacity: .8; }
+    70% { transform: scale(1.5); opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .look-pop {
+    position: absolute;
+    background: white;
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+    animation: pop-in .18s ease;
+    z-index: 10;
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(4px) scale(.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .look-pop img {
+    width: 38px; height: 38px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .look-pop-name { font-size: 12.5px; font-weight: 600; display: block; }
+  .look-pop-price { font-size: 12px; color: var(--muted); display: block; margin-top: 1px; }
+  .look-pop-btn {
+    margin-left: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 7px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .look-content .eyebrow {
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .look-content h2 {
+    font-size: 34px;
+    line-height: 1.15;
+    margin: 0 0 14px;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+  .look-content p {
+    font-size: 14.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0 0 26px;
+    max-width: 420px;
+  }
+  .look-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    border-top: 1px solid var(--line);
+  }
+  .look-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .look-row.active { opacity: .55; }
+  .look-row-num {
+    font-size: 11px;
+    color: var(--muted);
+    width: 16px;
+  }
+  .look-row-thumb {
+    width: 44px; height: 44px;
+    border-radius: 7px;
+    object-fit: cover;
+    background: #eee;
+  }
+  .look-row-name { font-size: 13.5px; font-weight: 500; flex: 1; }
+  .look-row-price { font-size: 13px; font-weight: 600; }
+  .look-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .look-count { font-size: 13px; color: var(--muted); }
+  .look-count strong { color: var(--ink); font-size: 15px; }
+  .btn-add-all {
+    background: var(--ink);
+    color: white;
+    border: none;
+    padding: 13px 24px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-add-all:hover { opacity: .88; }
+
+  .pitch {
+    max-width: 1180px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+  }
+  .pitch-box {
+    background: #fffef9;
+    border: 1px solid #eee0c2;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 12.5px;
+    color: #6b5a2e;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Shop the Look — Demo</h1>
+    <div class="sub">Görsele tıklanabilir ürün noktası ekleme · admin + mağaza önizlemesi</div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-view="admin">Admin</div>
+    <div class="tab" data-view="store">Mağaza Önizleme</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN VIEW ===== -->
+<div class="view active" id="view-admin">
+  <div class="admin-wrap">
+    <div class="admin-canvas">
+      <div class="canvas-frame" id="canvas">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80" alt="lifestyle görsel" id="canvas-img">
+        <div class="canvas-hint">Ürün eklemek için görselin üzerine tıkla</div>
+      </div>
+    </div>
+    <div class="admin-side">
+      <h2>Ürün Noktaları</h2>
+      <p class="hint">Görsele tıkla → sağda kart açılır → ürün adı/fiyat/görsel gir. Değişiklikler anında sol tarafta ve mağaza önizlemesinde görünür.</p>
+      <div id="spot-list"></div>
+      <div class="empty-state" id="empty-state">Henüz nokta eklenmedi.<br>Soldaki görsele tıkla.</div>
+      <button class="btn-publish" id="btn-publish">Mağaza Önizlemesinde Gör →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STOREFRONT VIEW ===== -->
+<div class="view" id="view-store">
+  <div class="pitch">
+    <div class="pitch-box">
+      <strong>Bu ne gösteriyor:</strong> Solda admin'de eklediğin ürün noktaları, burada müşterinin göreceği gerçek deneyime dönüşüyor.
+      Noktaya tıkla → ürün kartı açılsın → "Sepete Ekle". Bu bileşen tema koduna gömülü değil; script olarak herhangi bir ikas mağazasına eklenebilir.
+    </div>
+  </div>
+  <div class="store-section">
+    <div class="look">
+      <div class="look-media" id="store-media">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80" alt="lifestyle görsel" id="store-img">
+      </div>
+      <div class="look-content">
+        <p class="eyebrow">Bu Görünümü Yakala</p>
+        <h2>Sonbahar Koleksiyonu</h2>
+        <p>Editoryal fotoğraftaki her parçayı tek tek keşfet, tıkla ve sepete ekle.</p>
+        <ul class="look-list" id="store-list"></ul>
+        <div class="look-footer">
+          <span class="look-count"><strong id="store-count">0</strong> ürün bu görünümde</span>
+          <button class="btn-add-all">Tümünü Sepete Ekle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- state ----
+  let spots = [
+    { x: 62, y: 32, name: "Yün Palto", price: "₺2.450", img: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&q=80" },
+    { x: 40, y: 68, name: "Deri Çanta", price: "₺1.180", img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=200&q=80" },
+    { x: 24, y: 88, name: "Bot", price: "₺1.650", img: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=200&q=80" },
+  ];
+  let nextId = 0;
+  spots = spots.map(s => ({ ...s, id: nextId++ }));
+
+  // ---- tabs ----
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-" + tab.dataset.view).classList.add("active");
+      if (tab.dataset.view === "store") renderStore();
+    });
+  });
+  document.getElementById("btn-publish").addEventListener("click", () => {
+    document.querySelector('.tab[data-view="store"]').click();
+  });
+
+  // ---- admin: add spot on click ----
+  const canvas = document.getElementById("canvas");
+  canvas.addEventListener("click", (e) => {
+    if (e.target.closest(".spot-dot-admin")) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    spots.push({ id: nextId++, x, y, name: "", price: "", img: "" });
+    renderAdmin();
+  });
+
+  function removeSpot(id) {
+    spots = spots.filter(s => s.id !== id);
+    renderAdmin();
+  }
+
+  function updateSpot(id, field, value) {
+    const s = spots.find(s => s.id === id);
+    if (s) s[field] = value;
+  }
+
+  function renderAdmin() {
+    // dots on canvas
+    canvas.querySelectorAll(".spot-dot-admin").forEach(el => el.remove());
+    spots.forEach((s, i) => {
+      const dot = document.createElement("div");
+      dot.className = "spot-dot-admin";
+      dot.style.cssText = `position:absolute;left:${s.x}%;top:${s.y}%;transform:translate(-50%,-50%);
+        width:26px;height:26px;border-radius:50%;background:#1a1a1a;color:white;font-size:11px;font-weight:700;
+        display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;`;
+      dot.textContent = i + 1;
+      canvas.appendChild(dot);
+    });
+
+    // side list
+    const list = document.getElementById("spot-list");
+    const empty = document.getElementById("empty-state");
+    list.innerHTML = "";
+    empty.style.display = spots.length === 0 ? "block" : "none";
+
+    spots.forEach((s, i) => {
+      const card = document.createElement("div");
+      card.className = "spot-card";
+      card.innerHTML = `
+        <div class="spot-card-head">
+          <span class="spot-num">${i + 1}</span>
+          <button class="spot-remove" data-id="${s.id}">Sil</button>
+        </div>
+        <input type="text" placeholder="Ürün adı" value="${s.name}" data-id="${s.id}" data-field="name">
+        <input type="text" placeholder="Fiyat (örn. ₺1.200)" value="${s.price}" data-id="${s.id}" data-field="price">
+        <input type="text" placeholder="Görsel URL" value="${s.img}" data-id="${s.id}" data-field="img">
+      `;
+      list.appendChild(card);
+    });
+
+    list.querySelectorAll(".spot-remove").forEach(btn => {
+      btn.addEventListener("click", () => removeSpot(Number(btn.dataset.id)));
+    });
+    list.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", () => {
+        updateSpot(Number(input.dataset.id), input.dataset.field, input.value);
+      });
+    });
+  }
+
+  // ---- storefront render ----
+  let activeSpot = null;
+  function renderStore() {
+    const media = document.getElementById("store-media");
+    media.querySelectorAll(".look-dot, .look-pop").forEach(el => el.remove());
+
+    const validSpots = spots.filter(s => s.name);
+
+    validSpots.forEach((s) => {
+      const dot = document.createElement("button");
+      dot.className = "look-dot" + (activeSpot === s.id ? " active" : "");
+      dot.style.left = s.x + "%";
+      dot.style.top = s.y + "%";
+      dot.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activeSpot = activeSpot === s.id ? null : s.id;
+        renderStore();
+      });
+      media.appendChild(dot);
+
+      if (activeSpot === s.id) {
+        const pop = document.createElement("div");
+        pop.className = "look-pop";
+        pop.style.left = s.x + "%";
+        pop.style.top = (s.y + 8) + "%";
+        pop.innerHTML = `
+          ${s.img ? `<img src="${s.img}">` : ""}
+          <span>
+            <span class="look-pop-name">${s.name}</span>
+            <span class="look-pop-price">${s.price}</span>
+          </span>
+          <button class="look-pop-btn">Ekle</button>
+        `;
+        media.appendChild(pop);
+      }
+    });
+
+    // side list
+    const list = document.getElementById("store-list");
+    list.innerHTML = "";
+    validSpots.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.className = "look-row" + (activeSpot === s.id ? " active" : "");
+      li.innerHTML = `
+        <span class="look-row-num">${String(i + 1).padStart(2, "0")}</span>
+        ${s.img ? `<img class="look-row-thumb" src="${s.img}">` : `<span class="look-row-thumb"></span>`}
+        <span class="look-row-name">${s.name}</span>
+        <span class="look-row-price">${s.price}</span>
+      `;
+      li.addEventListener("mouseenter", () => { activeSpot = s.id; renderStore(); });
+      list.appendChild(li);
+    });
+
+    document.getElementById("store-count").textContent = validSpots.length;
+  }
+
+  renderAdmin();
+  renderStore();
+</script>
+
+</body>
+</html>
